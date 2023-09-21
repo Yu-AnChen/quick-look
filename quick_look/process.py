@@ -80,17 +80,30 @@ def process_dir(
         print()
 
 
-if __name__ == '__main__':
-    import fire
-    fire.Fire({
-        'run': process_dir,
-    })
+def watch_directory(
+    target_dir=TARGET_DIR,
+    cache_dir=CACHE_DIR,
+    process_kwargs=None
+):
+    from . import watcher
+    from watchdog.events import FileSystemEventHandler
+
+    class QuickLookHandler(FileSystemEventHandler):
+
+        def on_created(self, event):
+            process_dir(target_dir, cache_dir, process_kwargs)
+            time.sleep(5)
+    
+    target_dir = util.get_path(target_dir)
+    w = watcher.Watcher(target_dir, QuickLookHandler())
+    w.run()
 
 
 def main():
     import fire
     fire.Fire({
         'run': process_dir,
+        'watch': watch_directory
     })
 
 

@@ -21,7 +21,7 @@ ome-zarr = "^0.8.1"
 fire = ">=0.5.0"
 tqdm = "*"
 joblib = "*"
-
+watchdog = "*"
 
 [build-system]
 requires = ["poetry-core"]
