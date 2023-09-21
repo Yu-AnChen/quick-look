@@ -87,13 +87,25 @@ def watch_directory(
 ):
     from . import watcher
     from watchdog.events import FileSystemEventHandler
-
+    
     class QuickLookHandler(FileSystemEventHandler):
+        def __init__(self):
+            self.timer = None
 
         def on_created(self, event):
+            print(event)
+            if not self.timer:
+                self.timer = time.time()
+
+        def process_events(self):
+            if self.timer and (time.time() - self.timer >= 1):
+                self.timer = None
+                self.run_task()
+
+        def run_task(self):
             process_dir(target_dir, cache_dir, process_kwargs)
             time.sleep(5)
-    
+            
     target_dir = util.get_path(target_dir)
     w = watcher.Watcher(target_dir, QuickLookHandler())
     w.run()
