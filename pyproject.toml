@@ -1,0 +1,31 @@
+[tool.poetry]
+name = "quick-look"
+version = "2023.9.1"
+description = "Preview whole-slide scans with NGFF and Napari"
+authors = ["Yu-An Chen <atwood12@gmail.com>"]
+readme = "README.md"
+packages = [{include = "quick_look"}]
+repository = "https://github.com/Yu-AnChen/quick-look"
+homepage = "https://pypi.org/project/quick-look"
+keywords = [
+    "microscopy",
+    "whole-slide imaging",
+    "pathology",
+    "spatial biology"
+]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+ashlar = "*"
+ome-zarr = "^0.8.1"
+fire = ">=0.5.0"
+tqdm = "*"
+joblib = "*"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+quick-look = "quick_look.process:main"
