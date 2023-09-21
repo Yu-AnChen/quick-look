@@ -8,8 +8,8 @@ import time
 
 from . import ngff_metadata, preview_slide, util
 
-TARGET_DIR = r"/Users/yuanchen/Dropbox (HMS)/ashlar-dev-data/ashlar-rotation-data/3"
-CACHE_DIR = r"/Users/yuanchen/projects/napari-wsi-reader/src/.dev"
+INPUT_DIR = r"/Users/yuanchen/Dropbox (HMS)/ashlar-dev-data/ashlar-rotation-data/3"
+OUTPUT_DIR = r"/Users/yuanchen/projects/napari-wsi-reader/src/.dev"
 
 
 def _process_path(filepath):
@@ -33,18 +33,18 @@ def _to_log(log_path, img_path, img_shape, time_diff):
 
 
 def process_dir(
-    target_dir=TARGET_DIR,
-    cache_dir=CACHE_DIR,
+    input_dir=INPUT_DIR,
+    output_dir=OUTPUT_DIR,
     process_kwargs=None
 ):
-    target_dir = util.get_path(target_dir)
-    if not target_dir.exists():
-        print(f"Input directory does not exists: {target_dir}")
+    input_dir = util.get_path(input_dir)
+    if not input_dir.exists():
+        print(f"Input directory does not exists: {input_dir}")
         return
-    cache_dir = util.get_path(cache_dir)
-    cache_dir.mkdir(exist_ok=True, parents=True)
+    output_dir = util.get_path(output_dir)
+    output_dir.mkdir(exist_ok=True, parents=True)
     slides = []
-    for filepath in target_dir.iterdir():
+    for filepath in input_dir.iterdir():
         slides.append(_process_path(filepath))
     slides = filter(lambda x: x[0], slides)
 
@@ -52,7 +52,7 @@ def process_dir(
         process_kwargs = {}
     for rcpnl, rcjob in slides:
         img_path = rcpnl
-        out_path = cache_dir / rcpnl.name.replace('.rcpnl', '.ome.zarr')
+        out_path = output_dir / rcpnl.name.replace('.rcpnl', '.ome.zarr')
         start_time = time.perf_counter()
 
         root = preview_slide.rcpnl_to_mosaic_ngff(
@@ -74,15 +74,15 @@ def process_dir(
         end_time = time.perf_counter()
         img_shape = root['0'].shape
         time_diff = int(end_time - start_time)
-        _to_log(cache_dir / '000-process.log', rcpnl, img_shape, time_diff)
+        _to_log(output_dir / '000-process.log', rcpnl, img_shape, time_diff)
 
         print('elapsed', datetime.timedelta(seconds=time_diff))
         print()
 
 
 def watch_directory(
-    target_dir=TARGET_DIR,
-    cache_dir=CACHE_DIR,
+    input_dir=INPUT_DIR,
+    output_dir=OUTPUT_DIR,
     process_kwargs=None
 ):
     from . import watcher
@@ -103,19 +103,32 @@ def watch_directory(
                 self.run_task()
 
         def run_task(self):
-            process_dir(target_dir, cache_dir, process_kwargs)
+            process_dir(input_dir, output_dir, process_kwargs)
             time.sleep(5)
             
-    target_dir = util.get_path(target_dir)
-    w = watcher.Watcher(target_dir, QuickLookHandler())
+    input_dir = util.get_path(input_dir)
+    w = watcher.Watcher(input_dir, QuickLookHandler())
     w.run()
+
+
+def watch_directory_production(
+    input_dir=r"C:\Users\rarecyte\Desktop\INPUT-ashlar-lt",
+    output_dir=r"C:\Users\rarecyte\Desktop\OUTPUT-ashlar-lt.lnk",
+    process_kwargs=None
+):
+    return watch_directory(
+        input_dir=input_dir,
+        output_dir=output_dir,
+        process_kwargs=process_kwargs
+    )
 
 
 def main():
     import fire
     fire.Fire({
         'run': process_dir,
-        'watch': watch_directory
+        'watch': watch_directory_production,
+        'watch-dev': watch_directory
     })
 
 

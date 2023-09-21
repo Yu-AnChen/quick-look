@@ -28,4 +28,4 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
-quick-look = "quick_look.process:main"
+quicklook = "quick_look.process:main"
