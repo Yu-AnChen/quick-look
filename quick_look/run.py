@@ -1,15 +1,9 @@
-# ---------------------------------------------------------------------------- #
-#                         Process folder with shortcuts                        #
-# ---------------------------------------------------------------------------- #
 import datetime
 import pathlib
 import sys
 import time
 
-from . import ngff_metadata, preview_slide, util
-
-INPUT_DIR = r"/Users/yuanchen/Dropbox (HMS)/ashlar-dev-data/ashlar-rotation-data/3"
-OUTPUT_DIR = r"/Users/yuanchen/projects/napari-wsi-reader/src/.dev"
+from . import ngff_metadata, tile, util, path_configs
 
 
 def _process_path(filepath):
@@ -32,9 +26,9 @@ def _to_log(log_path, img_path, img_shape, time_diff):
         )
 
 
-def process_dir(
-    input_dir=INPUT_DIR,
-    output_dir=OUTPUT_DIR,
+def process_directory(
+    input_dir,
+    output_dir,
     process_kwargs=None
 ):
     input_dir = util.get_path(input_dir)
@@ -55,7 +49,7 @@ def process_dir(
         out_path = output_dir / rcpnl.name.replace('.rcpnl', '.ome.zarr')
         start_time = time.perf_counter()
 
-        root = preview_slide.rcpnl_to_mosaic_ngff(
+        root = tile.rcpnl_to_mosaic_ngff(
             img_path, out_path, **process_kwargs
         )
         if root is None:
@@ -64,7 +58,7 @@ def process_dir(
         channel_names = [f"Channel {i}" for i in range(len(root['0']))]
         if rcjob is not None:
             print('Adding channel names from rcjob')
-            channel_names = preview_slide._rcjob_channel_names(rcjob)            
+            channel_names = tile._rcjob_channel_names(rcjob)            
         channel_names = [
             f"{nn} ({rcpnl.name.split('@')[0]})"
             for nn in channel_names
@@ -81,8 +75,8 @@ def process_dir(
 
 
 def watch_directory(
-    input_dir=INPUT_DIR,
-    output_dir=OUTPUT_DIR,
+    input_dir,
+    output_dir,
     process_kwargs=None
 ):
     from . import watcher
@@ -103,7 +97,7 @@ def watch_directory(
                 self.run_task()
 
         def run_task(self):
-            process_dir(input_dir, output_dir, process_kwargs)
+            process_directory(input_dir, output_dir, process_kwargs)
             time.sleep(5)
             print(f"\nWatcher Running in {input_dir}/\n")
             
@@ -113,8 +107,8 @@ def watch_directory(
 
 
 def watch_directory_production(
-    input_dir=r"C:\Users\rarecyte\Desktop\INPUT-ashlar-lt",
-    output_dir=r"C:\Users\rarecyte\Desktop\OUTPUT-ashlar-lt.lnk",
+    input_dir=path_configs.config['production']['input_dir'],
+    output_dir=path_configs.config['production']['output_dir'],
     process_kwargs=None
 ):
     return watch_directory(
@@ -124,11 +118,25 @@ def watch_directory_production(
     )
 
 
+def process_directory_production(
+    input_dir=path_configs.config['production']['input_dir'],
+    output_dir=path_configs.config['production']['output_dir'],
+    process_kwargs=None
+):
+    return process_directory(
+        input_dir=input_dir,
+        output_dir=output_dir,
+        process_kwargs=process_kwargs
+    )
+    ...
+
+
 def main():
     import fire
     fire.Fire({
-        'run': process_dir,
+        'run': process_directory_production,
         'watch': watch_directory_production,
+        'run-dev': process_directory,
         'watch-dev': watch_directory
     })
 
@@ -141,4 +149,6 @@ if __name__ == '__main__':
 # ---------------------------------------------------------------------------- #
 '''
 [ ] Import into omero or upload to AWS S3 bucket
+[ ] Write better min/max
+[ ] Detect blurry region
 '''

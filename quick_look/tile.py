@@ -58,23 +58,23 @@ def rcpnl_to_mosaic_ngff(
 
     metadata_positions = metadata.positions
 
-    init_downscale_factor = 1
+    tile_downsize_factor = 1
     if pixel_size < min_pixel_size:
         # use factor of 2, this shouldn't be necessary
-        init_downscale_factor = 2 ** np.ceil(
-            np.log1(min_pixel_size / pixel_size)
+        tile_downsize_factor = 2 ** np.ceil(
+            np.log2(min_pixel_size / pixel_size)
         ).astype(int)
         print(
             f"pixel size {pixel_size} is smaller than `min_pixel_size` ({min_pixel_size});"
-            f" will downsize the image by factor of {init_downscale_factor}"
+            f" will downsize the image by factor of {tile_downsize_factor}"
         )
     
-    pixel_size *= init_downscale_factor
+    pixel_size *= tile_downsize_factor
 
     positions, tile_shape = _process_tile_positions(
-        metadata_positions / init_downscale_factor,
+        metadata_positions / tile_downsize_factor,
         positions_mode=positions_mode,
-        tile_shape=np.ceil(tile_shape / init_downscale_factor).astype(int)
+        tile_shape=np.ceil(tile_shape / tile_downsize_factor).astype(int)
     )
 
     mosaic_shape = (num_channels, *(positions.max(axis=0) + tile_shape))
@@ -90,7 +90,13 @@ def rcpnl_to_mosaic_ngff(
     n_jobs = min(num_channels, joblib.cpu_count())
     _ = joblib.Parallel(n_jobs=n_jobs, verbose=0)(
         joblib.delayed(_mosaic_channel)(
-            reader, channel, root, positions, tile_shape=tile_shape, verbose=verbose
+            reader,
+            channel,
+            root,
+            positions,
+            tile_downsize_factor=tile_downsize_factor,
+            tile_shape=tile_shape,
+            verbose=verbose
         )
         for channel, verbose in zip(range(num_channels), [True]+(num_channels-1)*[False]) 
     )
@@ -102,6 +108,7 @@ def _mosaic_channel(
     channel,
     root,
     positions,
+    tile_downsize_factor=1,
     tile_shape=None,
     verbose=False
 ):
@@ -114,7 +121,8 @@ def _mosaic_channel(
         enum = enumerate(tqdm.tqdm(positions))
     intensity_maxs = np.zeros(len(positions))
     for idx, pp in enum:
-        _img = reader.read(idx, channel)[:tile_height, :tile_width]
+        _img = reader.read(idx, channel)[::tile_downsize_factor, ::tile_downsize_factor]
+        _img = _img[:tile_height, :tile_width]
         intensity_maxs[idx] = np.max(_img)
         for i, (_, aa) in enumerate(root.arrays()):
             rs, cs = np.floor(pp / 8**i).astype(int)
@@ -202,7 +210,8 @@ def test():
         img_path,
         out_path='/Users/yuanchen/projects/napari-wsi-reader/src/.dev/LSP12961@20220309_150112_606256.ome.zarr',
         overwrite=True,
-        positions_mode='trim'
+        positions_mode='trim',
+        min_pixel_size=1
     )
     '''
     trim
