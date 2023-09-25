@@ -4,7 +4,7 @@ config = {
         'output_dir': r"/Users/yuanchen/projects/quick-look/quick_look/.dev"
     },
     'production': {
-        'input_dir': r"C:\Users\rarecyte\Desktop\INPUT-ashlar-lt",
-        'output_dir': r"C:\Users\rarecyte\Desktop\OUTPUT-ashlar-lt.lnk"
+        'input_dir': r"C:\Users\rarecyte\Desktop\INPUT-quick-look",
+        'output_dir': r"C:\Users\rarecyte\Desktop\OUTPUT-quick-look.lnk"
     }
 }
