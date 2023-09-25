@@ -99,7 +99,7 @@ def watch_directory(
         def run_task(self):
             process_directory(input_dir, output_dir, process_kwargs)
             time.sleep(5)
-            print(f"\nWatcher Running in {input_dir}/\n")
+            print(f"\nWatcher Running in {input_dir}\n")
             
     input_dir = util.get_path(input_dir)
     w = watcher.Watcher(input_dir, QuickLookHandler())

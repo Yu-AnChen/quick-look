@@ -5,6 +5,6 @@ config = {
     },
     'production': {
         'input_dir': r"C:\Users\rarecyte\Desktop\INPUT-quick-look",
-        'output_dir': r"C:\Users\rarecyte\Desktop\OUTPUT-quick-look.lnk"
+        'output_dir': r"C:\Users\rarecyte\Desktop\OUTPUT-quick-look - Shortcut.lnk"
     }
 }
