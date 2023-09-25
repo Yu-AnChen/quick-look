@@ -1,6 +1,3 @@
-# ---------------------------------------------------------------------------- #
-#        Hide warnings: Stage coordinates' measurement unit is undefined       #
-# ---------------------------------------------------------------------------- #
 import functools
 import json
 import pathlib

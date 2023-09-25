@@ -13,7 +13,9 @@ def get_path(path):
         import win32com.client
         shell = win32com.client.Dispatch("WScript.Shell")
         if path.endswith('lnk'):
+            _path = path[:]
             path = shell.CreateShortCut(path).Targetpath
+            assert path != '', (f"{_path} does not exist")
     else:
         print('Unknown os.')
     return pathlib.Path(path)
