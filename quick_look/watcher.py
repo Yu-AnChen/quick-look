@@ -39,7 +39,7 @@ class DebounceHandler(FileSystemEventHandler):
         self.timer = None
 
     def on_created(self, event):
-        print(event)
+        print(time.time(), event)
         if not self.timer:
             self.timer = time.time()
 
@@ -49,8 +49,10 @@ class DebounceHandler(FileSystemEventHandler):
             self.run_task()
 
     def run_task(self):
-        id = self.timer
+        id = time.time()
         print(f'{id} run task')
+        import pathlib
+        print([p.name for p in sorted(pathlib.Path('.').glob('*'))])
         for i in range(5):
             print(f"{id} {5-i}")
             time.sleep(1)
