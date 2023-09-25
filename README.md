@@ -40,10 +40,10 @@ python -m pip install napari-ome-zarr
 ### Usecase 1: process scans "by hand"
 
 ```bash
-quicklook run -i <path/to/input/directory> -o <path/to/output/directory>
+quicklook process -i <path/to/input/directory> -o <path/to/output/directory>
 ```
 
-`quicklook run` processes **folders** or **files** in the input directory
+`quicklook process` processes **folders** or **files** in the input directory
 (`<path/to/input/directory>`). The **folders** must contain one `.rcpnl` file
 and optionally one `.rcjob` file; thie **files** must be a `.rcpnl` files. On
 Windows computers, the **folders** and **files** can be "shortcuts". The user
@@ -63,7 +63,7 @@ C:\quick-look\input
 Command executed
 
 ```bash
-quicklook run -i C:\quick-look\input -o C:\quick-look\output
+quicklook process -i C:\quick-look\input -o C:\quick-look\output
 ```
 
 Example output, two `.ome.zarr` are generated:
@@ -77,10 +77,10 @@ C:\quick-look\output
 ### Usecase 2: monitor a directory and tile a scan right after its file is created
 
 ```bash
-quicklook watch -i <path/to/onput/directory> -o <path/to/output/directory>
+quicklook monitor -i <path/to/onput/directory> -o <path/to/output/directory>
 ```
 
-Use `quicklook watch` command to monitor a folder (`<path/to/onput/directory>`)
+Use `quicklook monitor` command to monitor a folder (`<path/to/onput/directory>`)
 on a computer. Everytime an user paste shortcuts (of folders or files as
 described in usecase 1) into the folder, tiling will be launched, the results
 will be written to `<path/to/output/directory>`.

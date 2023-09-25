@@ -134,10 +134,10 @@ def process_directory_production(
 def main():
     import fire
     fire.Fire({
-        'run': process_directory_production,
-        'watch': watch_directory_production,
-        'run-dev': process_directory,
-        'watch-dev': watch_directory
+        'process': process_directory_production,
+        'monitor': watch_directory_production,
+        'process-dev': process_directory,
+        'monitor-dev': watch_directory
     })
 
 
