@@ -15,13 +15,14 @@ class Watcher:
             self.handler, self.directory, recursive=False
         )
         self.observer.start()
-        print(f"\nWatcher Running in {self.directory}/\n")
+        print(f"\nWatcher Running in {self.directory}\n")
         try:
             while True:
                 if hasattr(self.handler, 'process_events'):
                     self.handler.process_events()
-                time.sleep(1)
-        except:
+                time.sleep(10)
+        except Exception as e:
+            print(e)
             self.observer.stop()
         self.observer.join()
         print("\nWatcher Terminated\n")
