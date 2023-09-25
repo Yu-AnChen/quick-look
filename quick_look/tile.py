@@ -6,6 +6,7 @@ import json
 import pathlib
 import warnings
 
+import dask.array as da
 import joblib
 import numpy as np
 import ome_zarr.io
@@ -165,7 +166,7 @@ def _make_ngff(path, shape, tile_shape=None, dtype='uint16', pixel_size=1):
         max_layer=n_levels-1,
     )
 
-    data = zarr.zeros(shape, dtype=dtype)
+    data = da.zeros(shape, dtype=dtype)
 
     if tile_shape is None: tile_shape = (1024, 1024)
     chunks = [
