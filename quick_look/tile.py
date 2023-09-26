@@ -35,7 +35,7 @@ def rcpnl_to_mosaic_ngff(
     out_path,
     overwrite=False,
     positions_mode='trim',
-    min_pixel_size=0.5
+    min_pixel_size=1
 ):
     
     img_path = pathlib.Path(img_path)
