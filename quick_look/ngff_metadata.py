@@ -3,27 +3,16 @@ import zarr
 import numpy as np
 
 
-def update_pixel_size(multiscale_metadata, pixel_size, downscale_factor=8):
+def update_pixel_size(multiscale_metadata):
     ori = {**multiscale_metadata[0]}
     axes = [
         ax if ax['type'] != 'space'
         else {**ax, **{'unit': 'micrometer'}}
         for ax in ori['axes']
     ]
-    datasets = []
-    for idx, dd in enumerate(ori['datasets']):
-        factor = downscale_factor**idx
-        micron_scale = [
-            ss*ff
-            for ss, ff in zip(
-                dd['coordinateTransformations'][0]['scale'],
-                [1, pixel_size*factor, pixel_size*factor]
-            )
-        ]
-        datasets.append({**dd, **{'coordinateTransformations': [{'scale': micron_scale}]}})
     updated = {
         **ori,
-        **{'axes': axes, 'datasets': datasets}
+        **{'axes': axes}
     }
     return [updated]
 

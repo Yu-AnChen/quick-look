@@ -151,45 +151,61 @@ def _process_tile_positions(positions, positions_mode, tile_shape):
     return grid_positions, tile_shape
 
 
-def _make_ngff(path, shape, tile_shape=None, dtype='uint16', pixel_size=1):
+def _make_ngff(
+    path,
+    shape,
+    tile_shape=None,
+    dtype='uint16',
+    pixel_size=1,
+):
 
     store = ome_zarr.io.parse_url(path, mode="w").store
     root = zarr.group(store=store, overwrite=True)
     # Total 3 levels, 8x downsizing each level
     n_levels = 3
     downscale_factor = 8
-    scaler = ome_zarr.scale.Scaler(
-        downscale=downscale_factor,
-        max_layer=n_levels-1,
-    )
-
-    data = da.zeros(shape, dtype=dtype)
 
     if tile_shape is None: tile_shape = (1024, 1024)
-    chunks = [
-        (1, *np.ceil(np.divide(tile_shape, downscale_factor**i)).astype(int))
+
+    data = da.zeros(shape, dtype=dtype, chunks=(1, *tile_shape))
+    pyramid = [
+        data[:, ::downscale_factor**i, ::downscale_factor**i] for i in range(n_levels)
+    ]
+    chunks = [level.chunksize for level in pyramid]
+    coordinate_transformations = [
+        [{
+            'scale': [
+                1,
+                pixel_size * downscale_factor**i,
+                pixel_size * downscale_factor**i
+            ],
+            'type': 'scale',
+
+        },
+        # translation is needed for overlaying images at different resolution in
+        # napari
+        {
+            'translation': [
+                1,
+                .5 * pixel_size * downscale_factor**i,
+                .5 * pixel_size * downscale_factor**i
+            ],
+            'type': 'translation'
+        }]
         for i in range(n_levels)
     ]
 
-    ome_zarr.writer.write_image(
-        image=data,
+    ome_zarr.writer.write_multiscale(
+        pyramid=pyramid,
         group=root,
-        scaler=scaler,
         axes='cyx',
+        coordinate_transformations=coordinate_transformations,
         storage_options=[dict(chunks=cc) for cc in chunks],
-        compute=False
+        compute=False,
     )
-    # default ngff downscaled levels are using trim instead of pad and therefore
-    # are missing 1 pixel; resize to padded shapes here 
-    shapes = [
-        (shape[0], *np.ceil(np.array(shape)[1:] / downscale_factor**i).astype(int))
-        for i in range(n_levels)
-    ]
-    for (_, aa), ss in zip(root.arrays(), shapes):
-        aa.resize(ss)
 
     root.attrs['multiscales'] = nmetadata.update_pixel_size(
-        root.attrs['multiscales'], pixel_size
+        root.attrs['multiscales']
     )
     return root
 
