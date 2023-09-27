@@ -63,12 +63,14 @@ def add_channel_metadata(
     if channel_contrasts is None:
         if np.issubdtype(dtype, np.integer):
             dmin, dmax = np.iinfo(dtype).min, np.iinfo(dtype).max
-            channel_contrasts = [{'window': {'start': dmin, 'end': dmax}}] * n_channels
+            channel_contrasts = [
+                {'window': {'start': dmin, 'end': dmax, 'min': dmin, 'max': dmax}}
+            ] * n_channels
         else:
             channel_contrasts = [None] * n_channels
     else:
         channel_contrasts = [
-            {'window': {'start': dmin, 'end': dmax}}
+            {'window': {'start': dmin, 'end': dmax, 'min': dmin, 'max': dmax}}
             for dmin, dmax in channel_contrasts
         ]
     assert len(channel_contrasts) == n_channels
