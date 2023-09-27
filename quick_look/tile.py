@@ -35,7 +35,8 @@ def rcpnl_to_mosaic_ngff(
     out_path,
     overwrite=False,
     positions_mode='trim',
-    min_pixel_size=1
+    min_pixel_size=1,
+    **metadata
 ):
     
     img_path = pathlib.Path(img_path)
@@ -48,13 +49,13 @@ def rcpnl_to_mosaic_ngff(
     assert positions_mode in ['trim', 'tile', 'stage']
 
     reader = reg.BioformatsReader(str(img_path))
-    metadata = reader.metadata
-    num_channels = metadata.num_channels
-    tile_shape = metadata.size
-    pixel_size = metadata.pixel_size
-    dtype = metadata.pixel_dtype
+    _metadata = reader.metadata
+    num_channels = _metadata.num_channels
+    tile_shape = _metadata.size
+    pixel_size = _metadata.pixel_size
+    dtype = _metadata.pixel_dtype
 
-    metadata_positions = metadata.positions
+    metadata_positions = _metadata.positions
 
     tile_downsize_factor = 1
     if pixel_size < min_pixel_size:
@@ -82,9 +83,11 @@ def rcpnl_to_mosaic_ngff(
         shape=mosaic_shape,
         tile_shape=tile_shape,
         dtype=dtype,
-        pixel_size=pixel_size
+        pixel_size=pixel_size,
+        **metadata
     )
 
+    print('Writing to', out_path)
     n_jobs = min(num_channels, joblib.cpu_count())
     _ = joblib.Parallel(n_jobs=n_jobs, verbose=0)(
         joblib.delayed(_mosaic_channel)(
@@ -157,6 +160,7 @@ def _make_ngff(
     tile_shape=None,
     dtype='uint16',
     pixel_size=1,
+    **metadata
 ):
 
     store = ome_zarr.io.parse_url(path, mode="w").store
@@ -202,6 +206,7 @@ def _make_ngff(
         coordinate_transformations=coordinate_transformations,
         storage_options=[dict(chunks=cc) for cc in chunks],
         compute=False,
+        **metadata
     )
 
     root.attrs['multiscales'] = nmetadata.update_pixel_size(
@@ -222,10 +227,12 @@ def test():
     img_path = '/Users/yuanchen/Dropbox (HMS)/ashlar-dev-data/ashlar-rotation-data/3/LSP12961@20220309_150112_606256.rcpnl'
     zimg = rcpnl_to_mosaic_ngff(
         img_path,
-        out_path='/Users/yuanchen/projects/napari-wsi-reader/src/.dev/LSP12961@20220309_150112_606256.ome.zarr',
+        out_path='/Users/yuanchen/projects/quick-look/quick_look/.dev/LSP12961@20220309_150112_606256-2.ome.zarr',
         overwrite=True,
         positions_mode='trim',
-        min_pixel_size=1
+        min_pixel_size=2,
+        metadata={'software': 'zzz', 'method': 'trim'},
+        otherMetadata='b'
     )
     '''
     trim

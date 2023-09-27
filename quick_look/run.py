@@ -4,6 +4,7 @@ import sys
 import time
 
 from . import ngff_metadata, tile, util, path_configs
+from . import __version__ as _version
 
 
 def _process_path(filepath):
@@ -50,7 +51,8 @@ def process_directory(
         start_time = time.perf_counter()
 
         root = tile.rcpnl_to_mosaic_ngff(
-            img_path, out_path, **process_kwargs
+            img_path, out_path, **process_kwargs,
+            metadata={'software': 'quick-look', 'version': _version}
         )
         if root is None:
             continue
