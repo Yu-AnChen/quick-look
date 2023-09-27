@@ -50,7 +50,7 @@ def process_directory(
         out_path = output_dir / rcpnl.name.replace('.rcpnl', '.ome.zarr')
         start_time = time.perf_counter()
 
-        root = tile.rcpnl_to_mosaic_ngff(
+        root = tile.tile_rcpnl(
             img_path, out_path, **process_kwargs,
             metadata={'software': 'quick-look', 'version': _version}
         )

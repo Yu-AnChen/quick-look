@@ -1,5 +1,6 @@
 import functools
 import json
+import math
 import pathlib
 import warnings
 
@@ -30,15 +31,16 @@ def ignore_warnings_stage_position_unit(func):
 
 
 @ignore_warnings_stage_position_unit
-def rcpnl_to_mosaic_ngff(
+def tile_rcpnl(
     img_path,
     out_path,
     overwrite=False,
     positions_mode='trim',
     min_pixel_size=1,
+    pyramid_downscale_factor=8,
+    pyramid_level_max_size=1024,
     **metadata
 ):
-    
     img_path = pathlib.Path(img_path)
     out_path = pathlib.Path(out_path)
     print('Processing', img_path.name)
@@ -84,19 +86,22 @@ def rcpnl_to_mosaic_ngff(
         tile_shape=tile_shape,
         dtype=dtype,
         pixel_size=pixel_size,
+        pyramid_downscale_factor=pyramid_downscale_factor,
+        pyramid_level_max_size=pyramid_level_max_size,
         **metadata
     )
 
     print('Writing to', out_path)
     n_jobs = min(num_channels, joblib.cpu_count())
     _ = joblib.Parallel(n_jobs=n_jobs, verbose=0)(
-        joblib.delayed(_mosaic_channel)(
+        joblib.delayed(_tile_channel)(
             reader,
             channel,
             root,
             positions,
             tile_downsize_factor=tile_downsize_factor,
             tile_shape=tile_shape,
+            pyramid_downscale_factor=pyramid_downscale_factor,
             verbose=verbose
         )
         for channel, verbose in zip(range(num_channels), [True]+(num_channels-1)*[False]) 
@@ -104,19 +109,20 @@ def rcpnl_to_mosaic_ngff(
     return root
 
 
-def _mosaic_channel(
+def _tile_channel(
     reader,
     channel,
     root,
     positions,
     tile_downsize_factor=1,
     tile_shape=None,
+    pyramid_downscale_factor=8,
     verbose=False
 ):
     if tile_shape is None:
         tile_shape = reader.read(0, 0).shape
     tile_height, tile_width = tile_shape
-    downscale_factor = 8
+    downscale_factor = pyramid_downscale_factor
     enum = enumerate(positions)
     if verbose:
         enum = enumerate(tqdm.tqdm(positions))
@@ -126,7 +132,7 @@ def _mosaic_channel(
         _img = _img[:tile_height, :tile_width]
         intensity_maxs[idx] = np.max(_img)
         for i, (_, aa) in enumerate(root.arrays()):
-            rs, cs = np.floor(pp / 8**i).astype(int)
+            rs, cs = np.floor(pp / downscale_factor**i).astype(int)
             img = _img[::downscale_factor**i, ::downscale_factor**i]
             h, w = img.shape
             aa[channel, rs:rs+h, cs:cs+w] = img
@@ -154,20 +160,31 @@ def _process_tile_positions(positions, positions_mode, tile_shape):
     return grid_positions, tile_shape
 
 
+def _num_levels(base_shape, downscale_factor=8, max_size=1024):
+    factor = max(base_shape) / max_size
+    return math.ceil(math.log(factor, downscale_factor)) + 1
+
+
 def _make_ngff(
     path,
     shape,
     tile_shape=None,
     dtype='uint16',
     pixel_size=1,
+    pyramid_downscale_factor=8,
+    pyramid_level_max_size=1024,
     **metadata
 ):
-
     store = ome_zarr.io.parse_url(path, mode="w").store
     root = zarr.group(store=store, overwrite=True)
-    # Total 3 levels, 8x downsizing each level
-    n_levels = 3
-    downscale_factor = 8
+
+    n_levels = _num_levels(
+        shape,
+        downscale_factor=pyramid_downscale_factor,
+        max_size=pyramid_level_max_size
+    )
+    
+    downscale_factor = pyramid_downscale_factor
 
     if tile_shape is None: tile_shape = (1024, 1024)
 
@@ -225,12 +242,14 @@ def _rcjob_channel_names(rcjob_path):
 
 def test():
     img_path = '/Users/yuanchen/Dropbox (HMS)/ashlar-dev-data/ashlar-rotation-data/3/LSP12961@20220309_150112_606256.rcpnl'
-    zimg = rcpnl_to_mosaic_ngff(
+    return tile_rcpnl(
         img_path,
-        out_path='/Users/yuanchen/projects/quick-look/quick_look/.dev/LSP12961@20220309_150112_606256-2.ome.zarr',
+        out_path='/Users/yuanchen/projects/quick-look/quick_look/.dev/LSP12961@20220309_150112_606256-1.ome.zarr',
         overwrite=True,
         positions_mode='trim',
-        min_pixel_size=2,
+        min_pixel_size=1,
+        pyramid_downscale_factor=4,
+        pyramid_level_max_size=2048,
         metadata={'software': 'zzz', 'method': 'trim'},
         otherMetadata='b'
     )

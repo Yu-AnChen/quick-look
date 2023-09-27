@@ -6,5 +6,5 @@ except ModuleNotFoundError:
 __version__ = importlib_metadata.version(__name__)
 
 from .tile import (
-    rcpnl_to_mosaic_ngff
+    tile_rcpnl
 )
