@@ -47,7 +47,8 @@ def tile_rcpnl(
     if out_path.exists() & (not overwrite):
         print(f"Aborted. {out_path} exists and `overwrite` is `False`")
         return
-
+    if str(out_path).lower().startswith('s3:'):
+        out_path = 's3://' + '/'.join(out_path.parts[1:])
     assert positions_mode in ['trim', 'tile', 'stage']
 
     reader = reg.BioformatsReader(str(img_path))
@@ -119,6 +120,8 @@ def _tile_channel(
     pyramid_downscale_factor=8,
     verbose=False
 ):
+    if hasattr(root.store.fs, 's3_additional_kwargs'):
+        root.store.fs.s3_additional_kwargs['ACL'] = 'public-read'
     if tile_shape is None:
         tile_shape = reader.read(0, 0).shape
     tile_height, tile_width = tile_shape
@@ -176,6 +179,8 @@ def _make_ngff(
     **metadata
 ):
     store = ome_zarr.io.parse_url(path, mode="w").store
+    if hasattr(store.fs, 's3_additional_kwargs'):
+        store.fs.s3_additional_kwargs['ACL'] = 'public-read'
     root = zarr.group(store=store, overwrite=True)
 
     n_levels = _num_levels(
@@ -215,7 +220,11 @@ def _make_ngff(
         }]
         for i in range(n_levels)
     ]
-
+    if hasattr(store.fs, 's3_additional_kwargs'):
+        pyramid=[
+            zarr.zeros_like(pp, chunks=pp.chunksize)
+            for pp in pyramid
+        ]
     ome_zarr.writer.write_multiscale(
         pyramid=pyramid,
         group=root,
@@ -241,10 +250,10 @@ def _rcjob_channel_names(rcjob_path):
 
 
 def test():
-    img_path = '/Users/yuanchen/Dropbox (HMS)/ashlar-dev-data/ashlar-rotation-data/3/LSP12961@20220309_150112_606256.rcpnl'
+    img_path = r"D:\ZM_CYCIF1_037_Skin\TO_40\Scan_20170220_112522_01x4x00117.rcpnl"
     return tile_rcpnl(
         img_path,
-        out_path='/Users/yuanchen/projects/quick-look/quick_look/.dev/LSP12961@20220309_150112_606256-1.ome.zarr',
+        out_path=r's3://www.cycif.org/YC-test-20230918/Scan_20170220_112522_01x4x00117.ome.zarr',
         overwrite=True,
         positions_mode='trim',
         min_pixel_size=1,
