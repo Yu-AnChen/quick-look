@@ -18,11 +18,11 @@ installing miniconda](https://docs.conda.io/en/latest/miniconda.html).
 *In most cases, this is also the computer that acquires the images.*
 
 ```bash
-conda create -n quick-look -c conda-forge python=3.10 numpy scipy matplotlib networkx scikit-image=0.19 scikit-learn tifffile zarr pyjnius blessed tqdm fire watchdog joblib pywin32
+conda create -n quick-look -c conda-forge python=3.10 numpy scipy matplotlib networkx scikit-image=0.19 scikit-learn tifffile zarr pyjnius blessed tqdm fire watchdog joblib pywin32 git
 
 conda activate quick-look
 
-python -m pip install quick-look
+python -m pip install git+https://github.com/Yu-AnChen/quick-look.git
 ```
 
 ### Install `napari` and `napari-ome-zarr` to view the pyramidal images
