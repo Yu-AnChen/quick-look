@@ -30,7 +30,8 @@ def _to_log(log_path, img_path, img_shape, time_diff):
 def process_directory(
     input_dir,
     output_dir,
-    process_kwargs=None
+    process_kwargs=None,
+    inspect_focus=False
 ):
     input_dir = util.get_path(input_dir)
     if not input_dir.exists():
@@ -74,6 +75,21 @@ def process_directory(
 
         print('elapsed', datetime.timedelta(seconds=time_diff))
         print()
+
+        if inspect_focus:
+            img_path = pathlib.Path(root.store.dir_path())
+            focus_path = img_path.parent / img_path.name.replace('.ome.zarr', '-focus.ome.zarr')
+            focus_img = _inspect_focus(root)
+            focus_img = focus_img.reshape(1, *focus_img.shape).astype('float32')
+            root_focus = tile._make_ngff(
+                focus_path,
+                focus_img.shape,
+                tile_shape=focus_img.shape[1:],
+                dtype=focus_img.dtype,
+                pixel_size=1.3*32
+            )
+            for i, (_, aa) in enumerate(root_focus.arrays()):
+                aa[:] = focus_img[:, ::8**i, ::8**i]
 
 
 def watch_directory(
@@ -130,7 +146,14 @@ def process_directory_production(
         output_dir=output_dir,
         process_kwargs=process_kwargs
     )
-    ...
+
+
+def _inspect_focus(root):
+    from . import inspect
+    img = root[0][0]
+    lvar_img = inspect.var_of_laplacian(img, 32, sigma=0)
+    mean_img = inspect.mean_block(img, 32)
+    return lvar_img / mean_img
 
 
 def main():
