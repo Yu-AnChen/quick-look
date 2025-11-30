@@ -36,8 +36,8 @@ management.
     cd quicklook-env
     
     # Download pixi configuration
-    curl -OL https://raw.githubusercontent.com/Yu-AnChen/quick-look/main/quick-look-env/pixi.toml
-    curl -OL https://raw.githubusercontent.com/Yu-AnChen/quick-look/main/quick-look-env/pixi.lock
+    curl -OL https://raw.githubusercontent.com/Yu-AnChen/quick-look/main/pixi/pixi.toml
+    curl -OL https://raw.githubusercontent.com/Yu-AnChen/quick-look/main/pixi/pixi.lock
 
     # Install dependencies
     pixi install
