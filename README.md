@@ -2,54 +2,77 @@
     <img alt="quick-look" height="60" src="quick-look-logo.svg">
 </h1>
 
-Quickly tile whole-slide scans into a pyramidal images for holistic image review
+Quickly tile whole-slide scans into pyramidal images for holistic image review
 and data-driven decision-making in highly-multiplexed tissue imaging.
 
+## What it does
+
+`quick-look` is a command-line tool that processes whole-slide scans from
+RareCyte imagers (`.rcpnl` files) and converts them into pyramidal
+[OME-Zarr](https://ngff.openmicroscopy.org/0.4/) images. This format is ideal
+for fast, interactive viewing of very large images, as it allows visualization
+clients to load only the visible parts of the image at the appropriate
+resolution.
+
 *NOTE: Whole-slide scans from RareCyte imagers are supported. Processing file
-formats from other vendors are feasible but is not supported at the moment.*
+formats from other vendors is feasible but is not supported at the moment.*
+
+## Key features
+
+- Converts `.rcpnl` files to multi-scale OME-Zarr.
+- Processes a directory of scans or monitors a directory for new scans to
+  process automatically.
+- Extracts channel names from `.rcjob` files if present.
 
 ## Installation
 
-Installing palom in a fresh conda environment is recommended. [Instruction for
-installing miniconda](https://docs.conda.io/en/latest/miniconda.html).
+We recommend using [pixi](https://pixi.sh/latest/installation/) for environment
+management.
 
-### Install `quick-look` on the computer that does the tiling
+1. **Create a pixi workspace & install `quick-look`:**
 
-*In most cases, this is also the computer that acquires the images.*
+    ```cmd
+    mkdir quicklook-env
+    cd quicklook-env
+    
+    # Download pixi configuration
+    curl -OL https://raw.githubusercontent.com/Yu-AnChen/quick-look/main/quick-look-env/pixi.toml
+    curl -OL https://raw.githubusercontent.com/Yu-AnChen/quick-look/main/quick-look-env/pixi.lock
 
-```bash
-conda create -n quick-look -c conda-forge python=3.10 numpy scipy matplotlib networkx scikit-image=0.19 scikit-learn tifffile zarr pyjnius blessed tqdm fire watchdog joblib pywin32 git
+    # Install dependencies
+    pixi install
+    ```
 
-conda activate quick-look
+2. **Activate the environment:**
 
-python -m pip install git+https://github.com/Yu-AnChen/quick-look.git
-```
+    When using pixi, prepend `pixi run` to all `quicklook` commands. For
+    example: `pixi run quicklook process --help`.
 
-### Install `napari` and `napari-ome-zarr` to view the pyramidal images
+## Usage
 
-```bash
-conda create -n napari -c conda-forge python=3.10 pyqt napari
+`quick-look` provides two main commands: `process` to convert a directory of
+scans, and `monitor` to watch a directory for new scans.
 
-conda activate napari
+### Process a directory of scans
 
-python -m pip install napari-ome-zarr
-```
-
-## Using `quick-look`
-
-### Usecase 1: process scans "by hand"
+The `process` command will process all compatible files/folders in the specified
+input directory.
 
 ```bash
 quicklook process -i <path/to/input/directory> -o <path/to/output/directory>
 ```
 
-`quicklook process` processes **folders** or **files** in the input directory
-(`<path/to/input/directory>`). The **folders** must contain one `.rcpnl` file
-and optionally one `.rcjob` file; thie **files** must be a `.rcpnl` files. On
-Windows computers, the **folders** and **files** can be "shortcuts". The user
-doesn't need to move the actual files to the input folder.
+The input directory can contain:
 
-Example input, containing one `.rcpnl` file and one folder:
+- `.rcpnl` files.
+- Folders, each containing one `.rcpnl` file and optionally one `.rcjob` file
+  (for channel names).
+- On Windows, shortcuts to the above files and folders are also supported.
+
+**Example:**
+
+Given this input directory, containing 1 rcpnl file and a folder with an rcpnl
+file in it:
 
 ```cmd
 C:\quick-look\input
@@ -60,13 +83,13 @@ C:\quick-look\input
         LSP002@20230922_200722_567967.rcpnl
 ```
 
-Command executed
+Running this command:
 
 ```bash
 quicklook process -i C:\quick-look\input -o C:\quick-look\output
 ```
 
-Example output, two `.ome.zarr` are generated:
+Will produce two OME-Zarr folders in the output directory:
 
 ```cmd
 C:\quick-look\output
@@ -74,21 +97,23 @@ C:\quick-look\output
 └───LSP002@20230922_200722_567967.ome.zarr
 ```
 
-### Usecase 2: monitor a directory and tile a scan right after its file is created
+### Monitor a directory for new scans
+
+The `monitor` command watches a directory and automatically processes new scans
+as they are added. This is useful for automated processing pipelines.
 
 ```bash
-quicklook monitor -i <path/to/onput/directory> -o <path/to/output/directory>
+quicklook monitor -i <path/to/input/directory> -o <path/to/output/directory>
 ```
 
-Use `quicklook monitor` command to monitor a folder (`<path/to/onput/directory>`)
-on a computer. Everytime an user paste shortcuts (of folders or files as
-described in usecase 1) into the folder, tiling will be launched, the results
-will be written to `<path/to/output/directory>`.
+The tool will watch the input directory and, when a new file, folder, or Windows
+shortcut is added, it will launch the tiling process and write the result to the
+output directory.
 
-## Review the tiled whole-slide scans
+## Viewing the output
 
-`quick-look` writes out [NGFF
-v0.4](https://ngff.openmicroscopy.org/0.4/index.html) files. Using Napari with
-napari-ome-zarr is currently recommended for opening `quick-look` outputs. Other
-tools that might be able to open the images are listed
-[here](https://ome.github.io/ome-ngff-tools/).
+The generated `.ome.zarr` files can be viewed with various tools that support
+the NGFF format. We recommend using [QuPath v0.6.x](https://qupath.github.io/).
+
+Other tools that can open NGFF images are listed at [NGFF
+documentation](https://ngff.openmicroscopy.org/resources/tools/index.html#zarr-viewers).
