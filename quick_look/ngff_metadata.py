@@ -1,6 +1,9 @@
+import pathlib
+
+import numpy as np
+import ome_types
 import ome_zarr.io
 import zarr
-import numpy as np
 
 
 def update_pixel_size(multiscale_metadata):
@@ -25,7 +28,7 @@ def add_channel_metadata(
 ):
     store = ome_zarr.io.parse_url(path, mode="a").store
     root = zarr.group(store=store)
-    n_channels, _, _ = root[0].shape
+    n_channels, H, W = root[0].shape
 
     # channel names
     # list[str]
@@ -85,4 +88,34 @@ def add_channel_metadata(
             {**name, **color, **contrast, **{'active': False}}
         )
     root.attrs["omero"] = {"channels": channels}
+
+    # -------------------------------- for QuPath -------------------------------- #
+    # QuPath uses the ome-xml located at root/OME in the zarr file for pixel
+    # size, channel name, and channel colors
+    pixel_size = root.attrs["multiscales"][0]["datasets"][0][
+        "coordinateTransformations"
+    ][0]["scale"][-1]
+    root.create_group("OME", overwrite=True)
+
+    ome_channels = [
+        ome_types.model.Channel(name=nn["label"], color=cc["color"])
+        for cc, nn in zip(channel_colors, channel_names)
+    ]
+    ome_pixel = ome_types.model.Pixels(
+        size_c=n_channels,
+        size_x=W,
+        size_y=H,
+        size_t=1,
+        size_z=1,
+        dimension_order="XYCZT",
+        type=str(dtype),
+        physical_size_x=pixel_size,
+        physical_size_y=pixel_size,
+        channels=ome_channels,
+    )
+    ome = ome_types.model.OME(images=[ome_types.model.Image(pixels=ome_pixel)])
+
+    with open(pathlib.Path(store.dir_path()) / "OME" / "METADATA.ome.xml", "wb") as f:
+        f.write(ome.to_xml().encode())
+
     return channels
