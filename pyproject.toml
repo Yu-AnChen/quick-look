@@ -15,13 +15,14 @@ keywords = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = ">=3.10"
 ashlar = "*"
 ome-zarr = "^0.8.1"
 fire = ">=0.5.0"
 tqdm = "*"
-joblib = "*"
+joblib = "<1.5"
 watchdog = "*"
+ome-types = ">=0.6"
 
 [build-system]
 requires = ["poetry-core"]
