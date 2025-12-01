@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "quick-look"
-version = "2025.11.1"
+version = "2025.11.2"
 description = "Preview whole-slide scans with NGFF and Napari"
 authors = ["Yu-An Chen <atwood12@gmail.com>"]
 readme = "README.md"

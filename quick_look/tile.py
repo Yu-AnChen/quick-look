@@ -202,17 +202,20 @@ def _make_ngff(
             ],
             'type': 'scale',
 
-        },
+        }]
         # translation is needed for overlaying images at different resolution in
         # napari
-        {
-            'translation': [
-                1,
-                .5 * pixel_size * downscale_factor**i,
-                .5 * pixel_size * downscale_factor**i
-            ],
-            'type': 'translation'
-        }]
+
+        # NOTE: this is not the case anymore for napari v0.6.6 & napari-ome-zarr
+        # v0.6.1. Commenting the following out
+        # {
+        #     'translation': [
+        #         1,
+        #         .5 * pixel_size * downscale_factor**i,
+        #         .5 * pixel_size * downscale_factor**i
+        #     ],
+        #     'type': 'translation'
+        # }]
         for i in range(n_levels)
     ]
 
